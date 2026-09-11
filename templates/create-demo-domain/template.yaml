@@ -12,7 +12,7 @@ metadata:
     - openshift
     - general-simulation
 spec:
-  owner: guests
+  owner: user:default/robertsandoval
   type: service
 
   parameters:

@@ -32,4 +32,4 @@ metadata:
 spec:
   type: workshop
   lifecycle: experimental
-  owner: guests
+  owner: user:default/robertsandoval
