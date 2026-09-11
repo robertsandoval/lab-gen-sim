@@ -1,0 +1,21 @@
+You are helping add a new domain to the general-simulation platform (chore/helm-cleanup branch).
+
+Read the domain brief below and summarize (do not edit code yet):
+
+Hard rules:
+- New code lives under domain/<DOMAIN_ID>/
+- Register adapters only via DOMAIN_CATALOG in src/ingestion/registry.py
+- Never put domain names in src/core, src/reasoning, src/graph helpers, or src/ingestion/runner.py
+- Domain fields go in CanonicalEntity.attributes only
+- Tests must be offline (fixture + normalize, no live network/DB)
+
+Reference: domain/shipping/adapters/shipping_demo.py, domain/aviation/adapters/opensky_flights.py
+
+Answer:
+1. Exact file checklist for domain_id in the brief
+2. What must NOT be changed in core packages
+3. How ENABLED_DOMAINS and adapter_id interact
+4. Recommended id_prefix and entity type mapping
+
+DOMAIN BRIEF (YAML):
+{{DOMAIN_BRIEF}}

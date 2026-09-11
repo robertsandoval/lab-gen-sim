@@ -1,0 +1,20 @@
+Wire Neo4j dependency graph and scenario seed for domain {{DOMAIN_ID}}.
+
+Context:
+{{DOMAIN_SPEC}}
+
+Requirements:
+1. Create domain/{{DOMAIN_ID}}/bootstrap_graph.py that:
+   - Creates infrastructure Entity nodes from graph.infrastructure_nodes
+   - Creates dependency edges from graph.edges
+   - Injects SimulationEvent overlays for each scenario in the spec
+   - Is idempotent where practical
+2. Optionally create scripts/seed_{{DOMAIN_ID}}.py as CLI entry (pattern: scripts/seed_demo.py)
+3. Document how ingested entity ids (id_prefix) connect to graph nodes
+
+Read src/graph/nodes.py for create_entity_node, create_dependency_edge, EDGE_* constants.
+Do not mutate core platform code.
+
+Output file headers:
+### FILE: domain/{{DOMAIN_ID}}/bootstrap_graph.py
+### FILE: scripts/seed_{{DOMAIN_ID}}.py (if needed)

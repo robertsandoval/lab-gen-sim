@@ -1,0 +1,42 @@
+# Golden-path brief: reproduces the shipped UK airspace closure demo.
+# Use for Module 1 baseline — no codegen required.
+domain_id: aviation
+display_name: "Aviation — UK airspace closure"
+base_domain: aviation
+adapter_id: opensky_flights
+entity_model:
+  entity_type_default: moving_entity
+  id_prefix: opensky
+  entities:
+    - Aircraft
+    - AirspaceRegion
+  relationships:
+    - { from: Aircraft, to: AirspaceRegion, type: LOCATED_AT }
+data_source:
+  mode: live_api
+  description: "OpenSky Network ADS-B states API (shipped adapter in upstream domain/aviation)"
+  url: https://opensky-network.org/api/states/all
+scenarios:
+  - id: opensky-uk-closure-001
+    event_type: airspace_closure
+    narrative: >
+      UK airspace is closed due to a NATS GPS failure. Aircraft currently
+      over UK FIR must divert or hold; eastbound transatlantic flows are
+      severely disrupted.
+    affected_entity_ids:
+      - opensky-407290
+      - opensky-3c6444
+      - opensky-484161
+demo_questions:
+  - "UK airspace is closed due to a NATS GPS failure. Which aircraft are affected, what diversions should be issued, and what is the estimated cost of impact?"
+  - "Which routes are most exposed to the closure?"
+status_values:
+  - airborne
+  - on_ground
+attribute_fields:
+  - call_sign
+  - origin_country
+  - route
+  - velocity_ms
+  - revenue_usd
+geometry: Point

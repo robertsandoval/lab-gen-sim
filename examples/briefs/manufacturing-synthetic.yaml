@@ -1,0 +1,43 @@
+# Workshop codegen example: synthetic manufacturing line disruption.
+# Pipeline generates domain/manufacturing/ in a demo fork.
+domain_id: manufacturing
+display_name: "Factory line disruption"
+base_domain: shipping
+adapter_id: opcua_cells
+entity_model:
+  entity_type_default: fixed_node
+  id_prefix: mfg
+  entities:
+    - WorkCell
+    - Equipment
+    - MaterialLot
+  relationships:
+    - { from: WorkCell, to: Equipment, type: CONTAINS }
+    - { from: MaterialLot, to: WorkCell, type: FEEDS }
+    - { from: Equipment, to: Equipment, type: DEPENDS_ON }
+data_source:
+  mode: synthetic
+  description: "OPC-UA historian snapshot fixture (no live plant connection in workshop)"
+scenarios:
+  - id: press-breakdown-001
+    event_type: equipment_failure
+    narrative: >
+      Hydraulic press on Line 3 fails unexpectedly. Estimated repair time
+      six hours. Downstream assembly cells depend on press output.
+    affected_entity_ids:
+      - mfg-cell-line3-press
+      - mfg-cell-line3-assembly
+demo_questions:
+  - "Which downstream orders are impacted by the Line 3 press failure?"
+  - "What reroute options minimize total production delay?"
+status_values:
+  - running
+  - idle
+  - faulted
+  - maintenance
+attribute_fields:
+  - line_id
+  - sku
+  - throughput_units_per_hour
+  - order_backlog
+geometry: Point

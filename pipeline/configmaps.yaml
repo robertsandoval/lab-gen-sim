@@ -1,0 +1,34 @@
+# ConfigMaps bundle lab-gen-sim scripts and prompts into the cluster.
+# Install with: oc apply -k pipeline/
+#
+# For production, replace with a build step that hashes file contents,
+# or mount from a lab-gen-sim image.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lab-gen-sim-scripts
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+data:
+  validate-brief.py: |
+    # Placeholder — apply from repo with:
+    # oc create configmap lab-gen-sim-scripts --from-file=scripts/ --dry-run=client -o yaml | oc apply -f -
+    # Run: make pipeline-configmaps (see Makefile)
+  check-diff-allowlist.sh: |
+    #!/usr/bin/env bash
+    echo "Install scripts via: make pipeline-configmaps"
+    exit 1
+  llm-generate.py: |
+    # see scripts/llm-generate.py in lab-gen-sim repo
+  apply-llm-files.py: |
+    # see scripts/apply-llm-files.py in lab-gen-sim repo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lab-gen-sim-prompts
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+data:
+  stage1-domain-spec.txt: |
+    # Install prompts via: make pipeline-configmaps

@@ -1,0 +1,153 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: create-demo-domain
+  title: Create Demo Domain
+  description: >
+    Scaffold a demo repository (fork of general-simulation at pinned chore/helm-cleanup SHA)
+    with a domain brief and trigger the LLM-guided Tekton codegen pipeline.
+    Does not modify the upstream general-simulation repository.
+  tags:
+    - recommended
+    - openshift
+    - general-simulation
+spec:
+  owner: guests
+  type: service
+
+  parameters:
+    - title: Demo domain information
+      required:
+        - domain_id
+        - display_name
+        - adapter_id
+      properties:
+        domain_id:
+          title: Domain ID
+          type: string
+          description: Python package name (lowercase, underscores). e.g. manufacturing
+          pattern: '^[a-z][a-z0-9_]{1,48}$'
+        display_name:
+          title: Display name
+          type: string
+          description: Human-readable name for the demo
+        adapter_id:
+          title: Adapter ID
+          type: string
+          description: Ingestion adapter key e.g. opcua_cells
+          pattern: '^[a-z][a-z0-9_]{1,48}$'
+        base_domain:
+          title: Reference domain
+          type: string
+          enum: [none, aviation, shipping]
+          default: none
+        data_source_mode:
+          title: Data source mode
+          type: string
+          enum: [synthetic, live_api]
+          default: synthetic
+        scenario_id:
+          title: Primary scenario ID
+          type: string
+          default: workshop-demo-001
+        scenario_narrative:
+          title: Scenario narrative
+          type: string
+          ui:widget: textarea
+          default: A disruptive event affects key entities in this domain.
+        demo_question:
+          title: Demo question
+          type: string
+          default: What is the impact of this disruption and what response options are recommended?
+
+    - title: Repository and deployment
+      required:
+        - repoUrl
+        - image_registry
+      properties:
+        repoUrl:
+          title: Demo repository location
+          type: string
+          description: 'GitHub repo for demo fork e.g. github.com?owner=myorg&repo=demo-manufacturing'
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+              - gitlab.com
+        image_registry:
+          title: Container registry
+          type: string
+          description: e.g. quay.io/myorg
+          default: quay.io
+        deploy_namespace:
+          title: OpenShift namespace
+          type: string
+          default: general-simulation
+        pipeline_namespace:
+          title: Pipeline namespace
+          type: string
+          default: openshift-pipelines
+
+  steps:
+    - id: fetch-base
+      name: Fetch general-simulation base
+      action: fetch:plain
+      input:
+        url: https://github.com/rh-ai-quickstart/general-simulation/tree/chore/helm-cleanup
+        targetPath: ./
+
+    - id: template-brief
+      name: Add domain brief
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          domain_id: ${{ parameters.domain_id }}
+          display_name: ${{ parameters.display_name }}
+          adapter_id: ${{ parameters.adapter_id }}
+          base_domain: ${{ parameters.base_domain }}
+          data_source_mode: ${{ parameters.data_source_mode }}
+          scenario_id: ${{ parameters.scenario_id }}
+          scenario_narrative: ${{ parameters.scenario_narrative }}
+          demo_question: ${{ parameters.demo_question }}
+          upstream_sha: "4118e0e69a30aabaf27c2f905acebebb4993d53a"
+          upstream_branch: chore/helm-cleanup
+
+    - id: publish
+      name: Publish demo repository
+      action: publish:github
+      input:
+        description: Demo domain extension for general-simulation (lab-gen-sim workshop)
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+        protectDefaultBranch: false
+        repoVisibility: private
+
+    - id: register
+      name: Register in catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+    - id: pipeline-readme
+      name: Add pipeline trigger instructions
+      action: fetch:template
+      input:
+        url: ./skeleton/pipeline
+        values:
+          domain_id: ${{ parameters.domain_id }}
+          image_registry: ${{ parameters.image_registry }}
+          deploy_namespace: ${{ parameters.deploy_namespace }}
+          pipeline_namespace: ${{ parameters.pipeline_namespace }}
+
+  output:
+    links:
+      - title: Demo repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
+      - title: Pipeline trigger instructions
+        icon: docs
+        url: ${{ steps.publish.output.remoteUrl }}/blob/main/pipeline/TRIGGER.md

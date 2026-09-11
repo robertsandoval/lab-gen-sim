@@ -1,0 +1,158 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: demo-domain-codegen
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  description: >
+    Gated LLM codegen pipeline for general-simulation demo forks.
+    Stages 0-7 with human approval gates after spec and adapter generation.
+  params:
+    - name: brief-path
+      type: string
+      default: domain-brief.yaml
+    - name: image-registry
+      type: string
+      description: "e.g. quay.io/myorg"
+    - name: image-name
+      type: string
+      default: general-sim-api
+    - name: image-tag
+      type: string
+      default: latest
+    - name: deploy-namespace
+      type: string
+      default: general-simulation
+    - name: skip-approval-gates
+      type: string
+      default: "false"
+      description: Set to true to skip manual approval tasks (CI only)
+    - name: approver
+      type: string
+      default: ""
+  workspaces:
+    - name: shared-workspace
+      description: Demo fork git clone
+  tasks:
+    - name: validate-brief
+      taskRef:
+        name: validate-brief
+      params:
+        - name: brief-path
+          value: $(params.brief-path)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: generate-spec
+      runAfter: [validate-brief]
+      taskRef:
+        name: llm-generate-spec
+      params:
+        - name: brief-path
+          value: $(params.brief-path)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: approve-spec
+      runAfter: [generate-spec]
+      when:
+        - input: $(params.skip-approval-gates)
+          operator: notin
+          values: ["true", "True", "1"]
+      taskRef:
+        name: manual-approval
+      params:
+        - name: message
+          value: "Review domain-spec.json in the demo repo. Approve PR or set skip-approval-gates=true."
+        - name: approver
+          value: $(params.approver)
+
+    - name: generate-adapter
+      runAfter: [generate-spec, approve-spec]
+      taskRef:
+        name: llm-generate-adapter
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: approve-adapter
+      runAfter: [generate-adapter]
+      when:
+        - input: $(params.skip-approval-gates)
+          operator: notin
+          values: ["true", "True", "1"]
+      taskRef:
+        name: manual-approval
+      params:
+        - name: message
+          value: "Review domain adapter + registry.py + helm/values-overlay.yaml."
+        - name: approver
+          value: $(params.approver)
+
+    - name: run-tests
+      runAfter: [generate-adapter, approve-adapter]
+      taskRef:
+        name: run-pytest
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: approve-graph
+      runAfter: [run-tests]
+      when:
+        - input: $(params.skip-approval-gates)
+          operator: notin
+          values: ["true", "True", "1"]
+      taskRef:
+        name: manual-approval
+      params:
+        - name: message
+          value: "Tests passed. Approve graph/scenario generation stage."
+        - name: approver
+          value: $(params.approver)
+
+    - name: generate-graph
+      runAfter: [run-tests, approve-graph]
+      taskRef:
+        name: llm-generate-graph
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: build-push
+      runAfter: [generate-graph]
+      taskRef:
+        name: build-push-image
+      params:
+        - name: image
+          value: $(params.image-registry)/$(params.image-name):$(params.image-tag)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: gitops-deploy
+      runAfter: [build-push]
+      taskRef:
+        name: gitops-deploy
+      params:
+        - name: namespace
+          value: $(params.deploy-namespace)
+        - name: image-tag
+          value: $(params.image-tag)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: smoke-test
+      runAfter: [gitops-deploy]
+      taskRef:
+        name: smoke-test
+      params:
+        - name: namespace
+          value: $(params.deploy-namespace)
+      workspaces:
+        - name: source
+          workspace: shared-workspace

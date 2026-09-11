@@ -1,0 +1,47 @@
+# ApplicationSet for demo repositories created by the workshop scaffolder.
+# Points at participant demo repos — NOT rh-ai-quickstart/general-simulation.
+#
+# Prerequisites:
+# - OpenShift GitOps operator installed
+# - Cluster generator or SCM provider token configured
+# - Demo repos contain helm/values-overlay.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: general-sim-demos
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/REPLACE_ORG/demo-domains-manifest.git
+        revision: main
+        files:
+          - path: demos/*.yaml
+  template:
+    metadata:
+      name: 'demo-{{domain_id}}'
+      labels:
+        app.kubernetes.io/part-of: lab-gen-sim
+    spec:
+      project: default
+      source:
+        repoURL: '{{repo_url}}'
+        targetRevision: '{{revision}}'
+        path: helm
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-overlay.yaml
+          parameters:
+            - name: global.imageTag
+              value: '{{image_tag}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

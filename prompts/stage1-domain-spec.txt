@@ -1,0 +1,42 @@
+Emit a structured domain specification JSON for the general-simulation demo fork.
+
+Input: domain-brief.yaml (below).
+
+Output ONLY valid JSON matching this shape (no markdown fences):
+{
+  "domain_id": "<string>",
+  "adapter_id": "<string>",
+  "entity_type": "<moving_entity|fixed_node|...>",
+  "id_prefix": "<prefix for entity ids>",
+  "status_values": ["..."],
+  "attribute_fields": ["..."],
+  "geometry": "Point|Polygon|none",
+  "adapter": {
+    "class_name": "<PascalCase>Adapter",
+    "module": "<adapter_id>",
+    "fetch_strategy": "synthetic_fixture|http_get|...",
+    "fixture_record_count": <int>
+  },
+  "registry": {
+    "import_path": "domain.<domain_id>.adapters.<module>:<ClassName>"
+  },
+  "graph": {
+    "infrastructure_nodes": [{"id": "...", "type": "...", "label": "..."}],
+    "edges": [{"from": "...", "to": "...", "type": "DEPENDS_ON|FEEDS|..."}],
+    "ingested_id_connection_notes": "<how live entity ids link to graph>"
+  },
+  "scenarios": [{"id": "...", "narrative": "...", "affected_entity_ids": ["..."]}],
+  "helm_overlay": {
+    "api_enabled_domains": "<domain_id or comma-separated>",
+    "ingestion_enabled": true,
+    "ingestion_adapter_id": "<adapter_id>"
+  }
+}
+
+Hard rules:
+- domain_id and adapter_id must match the brief
+- For synthetic data_source.mode, fetch_strategy must be synthetic_fixture
+- All domain-specific fields stay in attributes, never new DB columns
+
+DOMAIN BRIEF:
+{{DOMAIN_BRIEF}}

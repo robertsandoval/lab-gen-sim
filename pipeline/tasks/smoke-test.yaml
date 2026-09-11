@@ -1,0 +1,36 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: smoke-test
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  description: Seed demo data and POST /query against deployed API
+  params:
+    - name: namespace
+      type: string
+      default: general-simulation
+    - name: scenario-id
+      type: string
+      default: opensky-uk-closure-001
+  workspaces:
+    - name: source
+  steps:
+    - name: smoke
+      image: registry.redhat.io/openshift4/ose-cli:latest
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: NAMESPACE
+          value: $(params.namespace)
+        - name: SEED_MODE
+          value: cluster
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        if [[ -x scripts/smoke-uk-closure.sh ]]; then
+          chmod +x scripts/smoke-uk-closure.sh
+          ./scripts/smoke-uk-closure.sh
+        else
+          echo "Running make smoke-test from demo fork..."
+          make smoke-test NAMESPACE="$(params.namespace)" SEED_MODE=cluster
+        fi

@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: manual-approval
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  description: Human gate — pause until approver confirms (Tekton Manual Approval or PR review)
+  params:
+    - name: message
+      type: string
+      default: "Review generated artifacts in the demo repo PR, then approve to continue."
+    - name: approver
+      type: string
+      default: ""
+  steps:
+    - name: wait
+      image: registry.redhat.io/openshift4/ose-cli:latest
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        echo "=== MANUAL APPROVAL REQUIRED ==="
+        echo "$(params.message)"
+        echo ""
+        echo "In RHADS workshops, review the demo repo pull request before resuming."
+        echo "For automated CI, set param approver to a non-empty value to skip this gate."
+        if [[ -n "$(params.approver)" ]]; then
+          echo "Approver set — continuing."
+          exit 0
+        fi
+        echo "Set PipelineRun param 'skip-approval-gates=true' or pass approver to skip."
+        exit 1

@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: git-clone-demo
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  description: Clone demo repository into workspace (optional first task)
+  params:
+    - name: url
+      type: string
+    - name: revision
+      type: string
+      default: main
+  workspaces:
+    - name: output
+      description: Clone destination
+  steps:
+    - name: clone
+      image: registry.redhat.io/ubi9/ubi-minimal:latest
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        microdnf install -y git
+        git clone --depth 1 --branch "$(params.revision)" "$(params.url)" "$(workspaces.output.path)"

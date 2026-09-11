@@ -1,0 +1,28 @@
+domain_id: ${{ values.domain_id }}
+display_name: ${{ values.display_name }}
+base_domain: ${{ values.base_domain }}
+adapter_id: ${{ values.adapter_id }}
+entity_model:
+  entity_type_default: fixed_node
+  id_prefix: ${{ values.domain_id | replace("_", "-") }}
+  entities:
+    - Entity
+  relationships: []
+data_source:
+  mode: ${{ values.data_source_mode }}
+  description: "Workshop demo data source for ${{ values.display_name }}"
+scenarios:
+  - id: ${{ values.scenario_id }}
+    event_type: disruption
+    narrative: ${{ values.scenario_narrative }}
+    affected_entity_ids:
+      - ${{ values.domain_id | replace("_", "-") }}-entity-001
+demo_questions:
+  - ${{ values.demo_question }}
+status_values:
+  - active
+  - inactive
+attribute_fields:
+  - name
+  - status_detail
+geometry: Point

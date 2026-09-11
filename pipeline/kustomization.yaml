@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - Pipeline.yaml
+  - tasks/git-clone.yaml
+  - tasks/validate-brief.yaml
+  - tasks/llm-generate-spec.yaml
+  - tasks/manual-approval.yaml
+  - tasks/llm-generate-adapter.yaml
+  - tasks/run-pytest.yaml
+  - tasks/llm-generate-graph.yaml
+  - tasks/build-push.yaml
+  - tasks/gitops-deploy.yaml
+  - tasks/smoke-test.yaml
+  - configmaps.yaml
+  - secrets-example.yaml

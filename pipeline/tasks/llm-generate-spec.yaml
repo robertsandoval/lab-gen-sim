@@ -1,0 +1,59 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: llm-generate-spec
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  description: LLM stage 1 — emit domain-spec.json from domain-brief.yaml
+  params:
+    - name: brief-path
+      type: string
+      default: domain-brief.yaml
+  workspaces:
+    - name: source
+  steps:
+    - name: generate
+      image: python:3.11-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: LLM_BASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: llm-codegen-credentials
+              key: base-url
+              optional: true
+        - name: LLM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llm-codegen-credentials
+              key: api-key
+        - name: LLM_MODEL
+          valueFrom:
+            secretKeyRef:
+              name: llm-codegen-credentials
+              key: model
+              optional: true
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        pip install --quiet pyyaml
+        export LLM_BASE_URL="${LLM_BASE_URL:-https://api.openai.com/v1}"
+        export LLM_MODEL="${LLM_MODEL:-gpt-4o-mini}"
+        python /scripts/llm-generate.py \
+          --prompt /prompts/stage1-domain-spec.txt \
+          --brief "$(params.brief-path)" \
+          --output domain-spec.json
+      volumeMounts:
+        - name: lab-scripts
+          mountPath: /scripts
+        - name: lab-prompts
+          mountPath: /prompts
+  volumes:
+    - name: lab-scripts
+      configMap:
+        name: lab-gen-sim-scripts
+        defaultMode: 0555
+    - name: lab-prompts
+      configMap:
+        name: lab-gen-sim-prompts

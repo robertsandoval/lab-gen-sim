@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: run-pytest
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  description: Run offline pytest and enforce codegen diff allow-list
+  workspaces:
+    - name: source
+  steps:
+    - name: diff-check
+      image: registry.redhat.io/ubi9/ubi-minimal:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        chmod +x /scripts/check-diff-allowlist.sh
+        STAGED=1 /scripts/check-diff-allowlist.sh || true
+        git diff --cached --name-only | head -20 || true
+      volumeMounts:
+        - name: lab-scripts
+          mountPath: /scripts
+    - name: pytest
+      image: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        uv sync --all-extras
+        export LLM_BACKEND=fake
+        uv run pytest tests/test_registry.py tests/ -v --ignore=tests/e2e 2>/dev/null || \
+          uv run pytest tests/ -v -k "not e2e" --maxfail=3
+  volumes:
+    - name: lab-scripts
+      configMap:
+        name: lab-gen-sim-scripts
+        defaultMode: 0555

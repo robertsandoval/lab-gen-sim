@@ -1,0 +1,20 @@
+Add offline tests for adapter {{ADAPTER_ID}} in domain {{DOMAIN_ID}}.
+
+Context:
+{{DOMAIN_SPEC}}
+
+Requirements:
+1. Create tests/fixtures/{{ADAPTER_ID}}.json (few records; include one row normalize should skip)
+2. Create tests/test_{{ADAPTER_ID}}.py covering:
+   - normalize count / id prefix / type / status / attributes keys
+   - bad rows skipped
+3. Update tests/test_registry.py with assertion for domain {{DOMAIN_ID}}
+4. No network, no live DB
+
+Mirror tests/test_ingestion.py and tests/fixtures/shipping_demo.json patterns.
+
+Output file headers:
+### FILE: tests/fixtures/{{ADAPTER_ID}}.json
+### FILE: tests/test_{{ADAPTER_ID}}.py
+### FILE: tests/test_registry.py
+(only the added/changed sections for registry test)

@@ -1,0 +1,35 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: lab-gen-sim
+  description: General-Simulation LLM-guided demo lab for RHADS
+spec:
+  type: url
+  targets:
+    - ./templates/create-demo-domain/template.yaml
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: lab-gen-sim
+  title: General-Simulation Demo Lab
+  description: >
+    Workshop assets for RHADS — Developer Hub template, Tekton codegen pipeline,
+    and facilitator guides. Extends general-simulation (chore/helm-cleanup) without
+    modifying the upstream repo.
+  tags:
+    - workshop
+    - openshift
+    - rhads
+    - general-simulation
+  links:
+    - url: https://github.com/rh-ai-quickstart/general-simulation/tree/chore/helm-cleanup
+      title: Upstream general-simulation (read-only)
+      icon: github
+    - url: https://github.com/rh-ai-quickstart/general-simulation/blob/chore/helm-cleanup/ADD_DOMAIN.md
+      title: ADD_DOMAIN.md
+spec:
+  type: workshop
+  lifecycle: experimental
+  owner: guests

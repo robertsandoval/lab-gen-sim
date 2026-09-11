@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: build-push-image
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  description: Build general-sim API image from demo fork and push to Quay
+  params:
+    - name: image
+      type: string
+      description: "Full image reference e.g. quay.io/org/general-sim-api:tag"
+    - name: dockerfile
+      type: string
+      default: deploy/app/Containerfile
+  workspaces:
+    - name: source
+  steps:
+    - name: build-and-push
+      image: quay.io/buildah/stable:latest
+      workingDir: $(workspaces.source.path)
+      securityContext:
+        privileged: true
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        DF="$(params.dockerfile)"
+        if [[ ! -f "$DF" ]]; then
+          DF="deploy/app/Containerfile"
+        fi
+        buildah bud -f "$DF" -t "$(params.image)" .
+        buildah push "$(params.image)"

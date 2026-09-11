@@ -1,0 +1,7 @@
+# Workshop overlay — merged with helm/values.yaml at deploy time
+api:
+  enabledDomains: ${{ values.domain_id }}
+ingestion:
+  enabled: true
+  enabledDomains: ${{ values.domain_id }}
+  adapterId: ${{ values.adapter_id }}

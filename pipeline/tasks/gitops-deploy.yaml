@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: gitops-deploy
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  description: Helm upgrade demo deployment using values-overlay.yaml
+  params:
+    - name: release-name
+      type: string
+      default: general-simulation
+    - name: namespace
+      type: string
+      default: general-simulation
+    - name: image-tag
+      type: string
+  workspaces:
+    - name: source
+  steps:
+    - name: deploy
+      image: alpine/helm:3.14.0
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env sh
+        set -eu
+        OVERLAY="helm/values-overlay.yaml"
+        if [ ! -f "$OVERLAY" ]; then
+          echo "WARN: $OVERLAY missing — skipping helm deploy"
+          exit 0
+        fi
+        helm upgrade --install "$(params.release-name)" ./helm \
+          --namespace "$(params.namespace)" \
+          --create-namespace \
+          -f helm/values.yaml \
+          -f "$OVERLAY" \
+          --set global.imageTag="$(params.image-tag)" \
+          --wait --timeout 15m

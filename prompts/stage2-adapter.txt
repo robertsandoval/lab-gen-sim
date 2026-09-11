@@ -1,0 +1,26 @@
+Add a new domain package for: {{DOMAIN_ID}}
+
+Context from domain-spec.json:
+{{DOMAIN_SPEC}}
+
+Requirements:
+1. Create domain/{{DOMAIN_ID}}/__init__.py and domain/{{DOMAIN_ID}}/adapters/__init__.py
+2. Create domain/{{DOMAIN_ID}}/adapters/{{ADAPTER_ID}}.py implementing IngestionAdapter
+   (adapter_id class attr, async fetch, pure normalize -> list[CanonicalEntity])
+3. Mirror style of domain/shipping/adapters/shipping_demo.py for synthetic mode
+4. Put ALL domain-specific fields in attributes; do not extend CanonicalEntity
+5. Skip records that cannot become valid entities
+6. Add DomainSpec to DOMAIN_CATALOG in src/ingestion/registry.py:
+   domain_id: {{DOMAIN_ID}}
+   adapters: { "{{ADAPTER_ID}}": "domain.{{DOMAIN_ID}}.adapters.{{ADAPTER_ID}}:<ClassName>" }
+7. Create helm/values-overlay.yaml with:
+   api.enabledDomains: {{DOMAIN_ID}}
+   ingestion.enabled: true
+   ingestion.enabledDomains: {{DOMAIN_ID}}
+   ingestion.adapterId: {{ADAPTER_ID}}
+
+Do NOT edit src/core, src/reasoning, src/graph helpers, or src/ingestion/runner.py
+
+Output: complete file contents for each new or modified file. Use clear file path headers:
+### FILE: domain/{{DOMAIN_ID}}/adapters/{{ADAPTER_ID}}.py
+<file content>

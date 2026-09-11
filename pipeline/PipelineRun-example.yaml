@@ -1,0 +1,38 @@
+# Example PipelineRun for workshop fallback (manual trigger).
+# Prerequisites:
+#   make pipeline-install
+#   oc create secret generic llm-codegen-credentials --from-literal=api-key=... (see secrets-example.yaml)
+#   Clone demo repo into a PVC or use pipelinerun git clone task
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: demo-domain-
+  labels:
+    app.kubernetes.io/part-of: lab-gen-sim
+spec:
+  pipelineRef:
+    name: demo-domain-codegen
+  params:
+    - name: brief-path
+      value: domain-brief.yaml
+    - name: image-registry
+      value: quay.io/REPLACE_ORG
+    - name: image-name
+      value: general-sim-api
+    - name: image-tag
+      value: workshop-demo
+    - name: deploy-namespace
+      value: general-simulation
+    - name: skip-approval-gates
+      value: "true"
+    - name: approver
+      value: workshop-ci
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
