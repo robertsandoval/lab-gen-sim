@@ -93,7 +93,8 @@ spec:
       name: Fetch general-simulation base
       action: fetch:plain
       input:
-        url: https://github.com/rh-ai-quickstart/general-simulation/tree/chore/helm-cleanup
+        # Use pinned SHA — branch name chore/helm-cleanup breaks GitHub URL parsing (reads as branch "chore").
+        url: https://github.com/rh-ai-quickstart/general-simulation/tree/4118e0e69a30aabaf27c2f905acebebb4993d53a
         targetPath: ./
 
     - id: template-brief
